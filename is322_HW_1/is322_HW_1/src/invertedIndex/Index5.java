@@ -68,7 +68,7 @@ public class Index5 {
     }
  
     //-----------------------------------------------
-    public void buildIndex(String[] files) {  // from disk not from the internet
+       public void buildIndex(String[] files) {  // from disk not from the internet
         int fid = 0;
         for (String fileName : files) {
             try (BufferedReader file = new BufferedReader(new FileReader(fileName))) {
@@ -79,7 +79,7 @@ public class Index5 {
                 int flen = 0;
                 while ((ln = file.readLine()) != null) {
                     /// -2- **** complete here ****
-                    ///**** hint   flen +=  ________________(ln, fid);
+                       flen += indexOneLine(ln, fid);
                 }
                 sources.get(fid).length = flen;
 
@@ -88,7 +88,7 @@ public class Index5 {
             }
             fid++;
         }
-        //   printDictionary();
+          printDictionary();
     }
 
     //----------------------------------------------------------------------------  
@@ -156,30 +156,51 @@ public class Index5 {
     }
 
     //----------------------------------------------------------------------------  
-    Posting intersect(Posting pL1, Posting pL2) {
+ Posting intersect(Posting pL1, Posting pL2) { // Given two posting lists, the goal is to merge(intersect) those two lists.
 ///****  -1-   complete after each comment ****
 //   INTERSECT ( p1 , p2 )
 //          1  answer ←      {}
         Posting answer = null;
         Posting last = null;
 //      2 while p1  != NIL and p2  != NIL
-        while (pl1 != null && pL2 != null) {
+    while(pL1 != null && pL2 != null){
+    if(pL1.docId ==pL2.docId){
+       Posting newNode = new Posting(pL1.docId);
+       if(answer == null){
+        answer = newNode;
+       }
+       else{
+        last.next = newNode;
+       }
+       last = newNode;
+       pL1 = pL1.next;
+       pL2 = pL2.next;
+    }
+    else if(pL1.docId < pL2.docId){
+        pL1 = pL1.next;
+    }
+    else{
+        pL2 = pL2.next;
+    }
+    }
+     
 //          3 do if docID ( p 1 ) = docID ( p2 )
-                if(p)
+ 
 //          4   then ADD ( answer, docID ( p1 ))
-            // answer.add(pL1.docId);
-
+                // answer.add(pL1.docId);
+ 
 //          5       p1 ← next ( p1 )
 //          6       p2 ← next ( p2 )
-
-            //          7   else if docID ( p1 ) < docID ( p2 )
-
+ 
+ //          7   else if docID ( p1 ) < docID ( p2 )
+            
 //          8        then p1 ← next ( p1 )
 //          9        else p2 ← next ( p2 )
-        }
+ 
 //      10 return answer
         return answer;
     }
+
 
     public String find_24_01(String phrase) { // any mumber of terms non-optimized search 
         String result = "";
