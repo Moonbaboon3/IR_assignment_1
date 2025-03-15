@@ -4,20 +4,13 @@
  */
 package invertedIndex;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.Writer;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+
 import static java.lang.Math.log10;
 import static java.lang.Math.sqrt;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.io.PrintWriter;
-import java.util.ArrayList;
+
+import java.util.*;
+
 /**
  *
  * @author ehab
@@ -65,39 +58,45 @@ public class Index5 {
 
     //---------------------------------------------
     public void printDictionary() {
-        Iterator it = index.entrySet().iterator(); //make the index a set array and then create an itterator over it
-        while (it.hasNext()) { //loop over all entries in the index
-            Map.Entry pair = (Map.Entry) it.next(); // get next term(key) dictentry(value) pair in index
-            DictEntry dd = (DictEntry) pair.getValue(); //extract dictRntry from index entry
-            System.out.print("** [" + pair.getKey() + "," + dd.doc_freq + "]       =--> "); //output string of term and doc frequency
-            printPostingList(dd.pList); // print posting list of term
+        for (Map.Entry<String, DictEntry> stringDictEntryEntry : index.entrySet()) {//for each index entry
+            Map.Entry pair = (Map.Entry) stringDictEntryEntry;// get next term(key) dictentry(value) pair in index
+            DictEntry dd = (DictEntry) pair.getValue();//extract dictEntry from index entry
+            System.out.print("** [" + pair.getKey() + "," + dd.doc_freq + "]       =--> ");//output string of term and doc frequency
+            printPostingList(dd.pList);// print posting list of term
         }
         System.out.println("------------------------------------------------------");
         System.out.println("*** Number of terms = " + index.size());
     }
  
     //-----------------------------------------------
-       public void buildIndex(String[] files) {  // from disk not from the internet, parameter is string of collection documents
-        int fid = 0; // holds the file id first document is 0
-        for (String fileName : files) { // loop over every file
-            try (BufferedReader file = new BufferedReader(new FileReader(fileName))) { // buffer reader object reads file through file name
-                if (!sources.containsKey(fileName)) { // if the collection does not contain this file 
-                    sources.put(fid, new SourceRecord(fid, fileName, fileName, "notext")); // create a sourceRecord of the file with its information and add it to sources
+    public void buildIndex(String[] files) {
+        // Set the path to the collection directory and get the list of files if it exists
+        int fid = 0;// holds the file id first document is 0
+        for (String fileName : files) {// loop over every file
+            File file = new File(fileName); // create a file object
+            if (!file.exists() || !file.isFile()) { //make sure file exists and if not then skip
+                System.out.println("File " + fileName + " not found or is not a file. Skip it.");
+                continue;
+            }
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {// buffer reader object reads file through file name
+                if (!sources.containsKey(fileName)) {// if the collection does not contain this file 
+                    sources.put(fid, new SourceRecord(fid, fileName, fileName, "notext"));// create a sourceRecord of the file with its information and add it to sources
                 }
-                String ln; //holds current line
+
+                String line;//holds current line
                 int flen = 0; // holds number of words in line
-                while ((ln = file.readLine()) != null) { // there are words to itterate on
-                    /// -2- **** complete here ****
-                       flen += indexOneLine(ln, fid); // add word to index and or document id to posting list and update frequency
+                while ((line = reader.readLine()) != null) {// there are lines to itterate on
+                    flen += indexOneLine(line, fid);// add word to index and or document id to posting list and update frequency
                 }
                 sources.get(fid).length = flen;
 
             } catch (IOException e) {
-                System.out.println("File " + fileName + " not found. Skip it");
+                System.out.println("Error reading file " + fileName + ": " + e.getMessage());
             }
             fid++;
         }
-          printDictionary();
+        printDictionary();
     }
 
     //----------------------------------------------------------------------------  
@@ -146,16 +145,9 @@ public class Index5 {
     }
 
 //----------------------------------------------------------------------------  
-    boolean stopWord(String word) { // returns true if word is a stopWord otherwise false
-        if (word.equals("the") || word.equals("to") || word.equals("be") || word.equals("for") || word.equals("from") || word.equals("in")
-                || word.equals("a") || word.equals("into") || word.equals("by") || word.equals("or") || word.equals("and") || word.equals("that")) {
-            return true;
-        }
-        if (word.length() < 2) {
-            return true;
-        }
-        return false;
-
+    boolean stopWord(String word) {// returns true if word is a stopWord or less than 2 letters otherwise false 
+        return List.of("a", "an", "and", "are", "as", "at", "be", "by", "for", "if", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "will", "with").
+                contains(word.toLowerCase()) || word.length() < 2;
     }
 //----------------------------------------------------------------------------  
 
@@ -279,7 +271,7 @@ public class Index5 {
 
     public void store(String storageName) {
         try {
-            String pathToStorage = "C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName;
+            String pathToStorage = System.getProperty("user.dir") + "\\rl\\"+storageName;
             Writer wr = new FileWriter(pathToStorage);
             for (Map.Entry<Integer, SourceRecord> entry : sources.entrySet()) {
                 System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue().URL + ", Value = " + entry.getValue().title + ", Value = " + entry.getValue().text);
@@ -316,11 +308,9 @@ public class Index5 {
     }
 //=========================================    
     public boolean storageFileExists(String storageName){
-        java.io.File f = new java.io.File("C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName);
-        if (f.exists() && !f.isDirectory())
-            return true;
-        return false;
-            
+        java.io.File f = new java.io.File(System.getProperty("user.dir") + "\\rl"+storageName);
+        return f.exists() && !f.isDirectory();
+
     }
 //----------------------------------------------------    
     public void createStore(String storageName) {
