@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.io.PrintWriter;
-import java.utit.Arraylist;
+import java.util.ArrayList;
 /**
  *
  * @author ehab
@@ -26,17 +26,17 @@ public class Index5 {
 
     //--------------------------------------------
     int N = 0;
-    public Map<Integer, SourceRecord> sources;  // store the doc_id and the file name.
+    public Map<Integer, SourceRecord> sources;  // integer -> document_id , sourceRecord -> file information including name.
 
-    public HashMap<String, DictEntry> index; // THe inverted index
+    public HashMap<String, DictEntry> index; // THe inverted index  string -> term ,dictEntry -> hashSet with frequency and posting list)
     //--------------------------------------------
 
-    public Index5() {
+    public Index5() { // constructor 
         sources = new HashMap<Integer, SourceRecord>();
         index = new HashMap<String, DictEntry>();
     }
 
-    public void setN(int n) {
+    public void setN(int n) { 
         N = n;
     }
 
@@ -65,30 +65,30 @@ public class Index5 {
 
     //---------------------------------------------
     public void printDictionary() {
-        Iterator it = index.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry) it.next();
-            DictEntry dd = (DictEntry) pair.getValue();
-            System.out.print("** [" + pair.getKey() + "," + dd.doc_freq + "]       =--> ");
-            printPostingList(dd.pList);
+        Iterator it = index.entrySet().iterator(); //make the index a set array and then create an itterator over it
+        while (it.hasNext()) { //loop over all entries in the index
+            Map.Entry pair = (Map.Entry) it.next(); // get next term(key) dictentry(value) pair in index
+            DictEntry dd = (DictEntry) pair.getValue(); //extract dictRntry from index entry
+            System.out.print("** [" + pair.getKey() + "," + dd.doc_freq + "]       =--> "); //output string of term and doc frequency
+            printPostingList(dd.pList); // print posting list of term
         }
         System.out.println("------------------------------------------------------");
         System.out.println("*** Number of terms = " + index.size());
     }
  
     //-----------------------------------------------
-       public void buildIndex(String[] files) {  // from disk not from the internet
-        int fid = 0;
-        for (String fileName : files) {
-            try (BufferedReader file = new BufferedReader(new FileReader(fileName))) {
-                if (!sources.containsKey(fileName)) {
-                    sources.put(fid, new SourceRecord(fid, fileName, fileName, "notext"));
+       public void buildIndex(String[] files) {  // from disk not from the internet, parameter is string of collection documents
+        int fid = 0; // holds the file id first document is 0
+        for (String fileName : files) { // loop over every file
+            try (BufferedReader file = new BufferedReader(new FileReader(fileName))) { // buffer reader object reads file through file name
+                if (!sources.containsKey(fileName)) { // if the collection does not contain this file 
+                    sources.put(fid, new SourceRecord(fid, fileName, fileName, "notext")); // create a sourceRecord of the file with its information and add it to sources
                 }
-                String ln;
-                int flen = 0;
-                while ((ln = file.readLine()) != null) {
+                String ln; //holds current line
+                int flen = 0; // holds number of words in line
+                while ((ln = file.readLine()) != null) { // there are words to itterate on
                     /// -2- **** complete here ****
-                       flen += indexOneLine(ln, fid);
+                       flen += indexOneLine(ln, fid); // add word to index and or document id to posting list and update frequency
                 }
                 sources.get(fid).length = flen;
 
@@ -102,14 +102,15 @@ public class Index5 {
 
     //----------------------------------------------------------------------------  
     public int indexOneLine(String ln, int fid) {
-        int flen = 0;
+        int flen = 0; // holds number of words in a line
 
         String[] words = ln.split("\\W+");
       //   String[] words = ln.replaceAll("(?:[^a-zA-Z0-9 -]|(?<=\\w)-(?!\\S))", " ").toLowerCase().split("\\s+");
-        flen += words.length;
-        for (String word : words) {
-            word = word.toLowerCase();
-            if (stopWord(word)) {
+      //tokenizes ie extracts all words 
+        flen += words.length; // adds number of words found in line to flen
+        for (String word : words) { // each word in line
+            word = word.toLowerCase(); //make word lower case
+            if (stopWord(word)) { // if stopWord (a word the occurs alot and is useless to index) skip
                 continue;
             }
             word = stemWord(word);
@@ -119,21 +120,23 @@ public class Index5 {
                 index.put(word, new DictEntry());
             }
             // add document id to the posting list
-            if (!index.get(word).postingListContains(fid)) {
+            if (!index.get(word).postingListContains(fid)) {// if posting list of word doesn't contain document id
                 index.get(word).doc_freq += 1; //set doc freq to the number of doc that contain the term 
-                if (index.get(word).pList == null) {
-                    index.get(word).pList = new Posting(fid);
-                    index.get(word).last = index.get(word).pList;
-                } else {
+                if (index.get(word).pList == null) { // if posting list of word is null
+                    // create a new posting node and add it to index for word
+                    index.get(word).pList = new Posting(fid); 
+                    index.get(word).last = index.get(word).pList; 
+                } else { // posting list of word exists
+                    //create node and add to posting list for word
                     index.get(word).last.next = new Posting(fid);
                     index.get(word).last = index.get(word).last.next;
                 }
-            } else {
-                index.get(word).last.dtf += 1;
+            } else { // word and document id exist in index 
+                index.get(word).last.dtf += 1; //update dtf to show another instance of the word
             }
             //set the term_fteq in the collection
-            index.get(word).term_freq += 1;
-            if (word.equalsIgnoreCase("lattice")) {
+            index.get(word).term_freq += 1; // update global term frequncy in collection
+            if (word.equalsIgnoreCase("lattice")) { // assumption: if word lattice found print debugging information
 
                 System.out.println("  <<" + index.get(word).getPosting(1) + ">> " + ln);
             }
@@ -143,7 +146,7 @@ public class Index5 {
     }
 
 //----------------------------------------------------------------------------  
-    boolean stopWord(String word) {
+    boolean stopWord(String word) { // returns true if word is a stopWord otherwise false
         if (word.equals("the") || word.equals("to") || word.equals("be") || word.equals("for") || word.equals("from") || word.equals("in")
                 || word.equals("a") || word.equals("into") || word.equals("by") || word.equals("or") || word.equals("and") || word.equals("that")) {
             return true;
@@ -221,25 +224,28 @@ public class Index5 {
 
 
     public String find_24_01(String phrase) { // any mumber of terms non-optimized search 
-        String result = "";
-        String[] words = phrase.split("\\W+");
-        int len = words.length;
+        //parameter is a phrase ex: [any sentence works]
+        String result = ""; //  result holds a string with information about all files that contain all words from phrase
+        String[] words = phrase.split("\\W+"); // split the phrase into seperate words
+        int len = words.length; // holds number of words
         
         //fix this if word is not in the hash table will crash...
 
         //added an if condition to fix the exception by ensuring that the  key its trying to access even exists 
         //before trying to compare it  to the table
-        if(index.containsKey(words[0].toLowerCase())){
-        Posting posting = index.get(words[0].toLowerCase()).pList;
-        int i = 1;
-        while (i < len) {
+        if(index.containsKey(words[0].toLowerCase())){ // make word lowercase and make sure it is in the index
+        Posting posting = index.get(words[0].toLowerCase()).pList; // get the posting list of this word
+        int i = 1; // start with all remaining words
+        while (i < len) { //  while word is within list of words
             
-            posting = intersect(posting, index.get(words[i].toLowerCase()).pList);
+            posting = intersect(posting, index.get(words[i].toLowerCase()).pList); // find the intersection of documents for both words
             i++;
         }
     
-        while (posting != null) {
+        while (posting != null) { // loop over posting list with all intersected documents
             //System.out.println("\t" + sources.get(num));
+            
+            //extract information from current source record and add it to result
             result += "\t" + posting.docId + " - " + sources.get(posting.docId).title + " - " + sources.get(posting.docId).length + "\n";
             posting = posting.next;
         }
