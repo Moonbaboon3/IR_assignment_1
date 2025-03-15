@@ -4,20 +4,13 @@
  */
 package invertedIndex;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.Writer;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+
 import static java.lang.Math.log10;
 import static java.lang.Math.sqrt;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.io.PrintWriter;
-import java.utit.Arraylist;
+
+import java.util.*;
+
 /**
  *
  * @author ehab
@@ -65,9 +58,8 @@ public class Index5 {
 
     //---------------------------------------------
     public void printDictionary() {
-        Iterator it = index.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry) it.next();
+        for (Map.Entry<String, DictEntry> stringDictEntryEntry : index.entrySet()) {
+            Map.Entry pair = (Map.Entry) stringDictEntryEntry;
             DictEntry dd = (DictEntry) pair.getValue();
             System.out.print("** [" + pair.getKey() + "," + dd.doc_freq + "]       =--> ");
             printPostingList(dd.pList);
@@ -77,27 +69,34 @@ public class Index5 {
     }
  
     //-----------------------------------------------
-       public void buildIndex(String[] files) {  // from disk not from the internet
+    public void buildIndex(String[] files) {
+        // Set the path to the collection directory and get the list of files if it exists
         int fid = 0;
         for (String fileName : files) {
-            try (BufferedReader file = new BufferedReader(new FileReader(fileName))) {
+            File file = new File(fileName);
+            if (!file.exists() || !file.isFile()) {
+                System.out.println("File " + fileName + " not found or is not a file. Skip it.");
+                continue;
+            }
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
                 if (!sources.containsKey(fileName)) {
                     sources.put(fid, new SourceRecord(fid, fileName, fileName, "notext"));
                 }
-                String ln;
+
+                String line;
                 int flen = 0;
-                while ((ln = file.readLine()) != null) {
-                    /// -2- **** complete here ****
-                       flen += indexOneLine(ln, fid);
+                while ((line = reader.readLine()) != null) {
+                    flen += indexOneLine(line, fid);
                 }
                 sources.get(fid).length = flen;
 
             } catch (IOException e) {
-                System.out.println("File " + fileName + " not found. Skip it");
+                System.out.println("Error reading file " + fileName + ": " + e.getMessage());
             }
             fid++;
         }
-          printDictionary();
+        printDictionary();
     }
 
     //----------------------------------------------------------------------------  
@@ -144,15 +143,8 @@ public class Index5 {
 
 //----------------------------------------------------------------------------  
     boolean stopWord(String word) {
-        if (word.equals("the") || word.equals("to") || word.equals("be") || word.equals("for") || word.equals("from") || word.equals("in")
-                || word.equals("a") || word.equals("into") || word.equals("by") || word.equals("or") || word.equals("and") || word.equals("that")) {
-            return true;
-        }
-        if (word.length() < 2) {
-            return true;
-        }
-        return false;
-
+        return List.of("a", "an", "and", "are", "as", "at", "be", "by", "for", "if", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "will", "with").
+                contains(word.toLowerCase()) || word.length() < 2;
     }
 //----------------------------------------------------------------------------  
 
@@ -273,7 +265,7 @@ public class Index5 {
 
     public void store(String storageName) {
         try {
-            String pathToStorage = "C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName;
+            String pathToStorage = System.getProperty("user.dir") + "\\rl\\"+storageName;
             Writer wr = new FileWriter(pathToStorage);
             for (Map.Entry<Integer, SourceRecord> entry : sources.entrySet()) {
                 System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue().URL + ", Value = " + entry.getValue().title + ", Value = " + entry.getValue().text);
@@ -310,11 +302,9 @@ public class Index5 {
     }
 //=========================================    
     public boolean storageFileExists(String storageName){
-        java.io.File f = new java.io.File("C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName);
-        if (f.exists() && !f.isDirectory())
-            return true;
-        return false;
-            
+        java.io.File f = new java.io.File(System.getProperty("user.dir") + "\\rl"+storageName);
+        return f.exists() && !f.isDirectory();
+
     }
 //----------------------------------------------------    
     public void createStore(String storageName) {

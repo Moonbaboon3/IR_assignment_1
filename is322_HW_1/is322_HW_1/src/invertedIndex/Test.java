@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package invertedIndex;
 
 import java.io.BufferedReader;
@@ -17,36 +13,65 @@ public class Test {
 
     public static void main(String args[]) throws IOException {
         Index5 index = new Index5();
-        //|**  change it to your collection directory 
-        //|**  in windows "C:\\tmp11\\rl\\collection\\"       
-        String files = "C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl\\collection\\";
+        // Set the path to the collection directory
+        String files = System.getProperty("user.dir") + "\\rl\\collection\\";
 
         File file = new File(files);
-        //|** String[] 	list()
-        //|**  Returns an array of strings naming the files and directories in the directory denoted by this abstract pathname.
-        String[] fileList = file.list();
+        // Check if the collection directory exists
+        if (!file.exists() || !file.isDirectory()) {
+            System.out.println("Collection directory not found: " + files);
+            return;
+        }
 
+        // Get the list of files in the collection directory
+        String[] fileList = file.list();
+        if (fileList == null || fileList.length == 0) {
+            System.out.println("No files found in the collection directory.");
+            return;
+        }
+
+        // Sort the file list and update the index size
         fileList = index.sort(fileList);
         index.N = fileList.length;
 
+        // Build the full file paths
         for (int i = 0; i < fileList.length; i++) {
             fileList[i] = files + fileList[i];
         }
+
+        // Build the inverted index
         index.buildIndex(fileList);
+
+        // Store the index to a file (for persistence)
         index.store("index");
+
+        // Print the dictionary (for debugging)
         index.printDictionary();
 
-        String test3 = "data  should plain greatest comif"; // data  should plain greatest comif
-        System.out.println("Boo0lean Model result = \n" + index.find_24_01(test3));
+        // Test search with a predefined phrase
+        String test3 = "data should plain greatest comif"; // Example search phrase
+        System.out.println("Boolean Model result = \n" + index.find_24_01(test3));
 
+        // Interactive search loop
         String phrase = "";
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
         do {
             System.out.println("Print search phrase: ");
-            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
             phrase = in.readLine();
-/// -3- **** complete here ****
-        } while (!phrase.isEmpty());
 
+            // search the non-empty phrase
+            if (!phrase.isEmpty()) {
+                String searchResults = index.find_24_01(phrase);
+                if (searchResults.isEmpty()) {
+                    System.out.println("No results found for the phrase: " + phrase);
+                } else {
+                    System.out.println("Search results for \"" + phrase + "\":");
+                    System.out.println(searchResults);
+                }
+            }
+        } while (!phrase.isEmpty()); // Continue until an empty phrase is entered
+
+        System.out.println("Exiting...");
     }
 }
