@@ -249,18 +249,19 @@ public class Index5 {
     
     //---------------------------------
     String[] sort(String[] words) {  //bubble sort
-        boolean sorted = false;
+        boolean sorted = false; //initilized sorted flag
         String sTmp;
         //-------------------------------------------------------
-        while (!sorted) {
-            sorted = true;
-            for (int i = 0; i < words.length - 1; i++) {
-                int compare = words[i].compareTo(words[i + 1]);
-                if (compare > 0) {
-                    sTmp = words[i];
+        while (!sorted) { //while not sorted
+            sorted = true; //assume sorted is true
+            for (int i = 0; i < words.length - 1; i++) {//for the number of words
+                int compare = words[i].compareTo(words[i + 1]); // compare each word with next word
+                if (compare > 0) { // if not in place ie next word should alphabetically come first
+                    //swap word positions
+                    sTmp = words[i]; 
                     words[i] = words[i + 1];
                     words[i + 1] = sTmp;
-                    sorted = false;
+                    sorted = false; // pass lead to at least 1 swap so not sorted
                 }
             }
         }
@@ -271,11 +272,12 @@ public class Index5 {
 
     public void store(String storageName) {
         try {
-            String pathToStorage = System.getProperty("user.dir") + "\\rl\\"+storageName;
-            Writer wr = new FileWriter(pathToStorage);
-            for (Map.Entry<Integer, SourceRecord> entry : sources.entrySet()) {
+            String pathToStorage = System.getProperty("user.dir") + "\\rl\\"+storageName; //get path to collection
+            Writer wr = new FileWriter(pathToStorage); // create a writer object to this location
+            for (Map.Entry<Integer, SourceRecord> entry : sources.entrySet()) { // for each source document
                 System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue().URL + ", Value = " + entry.getValue().title + ", Value = " + entry.getValue().text);
-                wr.write(entry.getKey().toString() + ",");
+                //write source record details to document
+                wr.write(entry.getKey().toString() + ","); 
                 wr.write(entry.getValue().URL.toString() + ",");
                 wr.write(entry.getValue().title.replace(',', '~') + ",");
                 wr.write(entry.getValue().length + ","); //String formattedDouble = String.format("%.2f", fee );
@@ -284,13 +286,15 @@ public class Index5 {
             }
             wr.write("section2" + "\n");
 
-            Iterator it = index.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry pair = (Map.Entry) it.next();
-                DictEntry dd = (DictEntry) pair.getValue();
+            Iterator it = index.entrySet().iterator(); // create an iterator over index
+            while (it.hasNext()) { // while there are entries in the index
+                Map.Entry pair = (Map.Entry) it.next(); // get next source document
+                DictEntry dd = (DictEntry) pair.getValue(); // get next dicEntry
                 //  System.out.print("** [" + pair.getKey() + "," + dd.doc_freq + "] <" + dd.term_freq + "> =--> ");
+                //write DictEntry details to document
                 wr.write(pair.getKey().toString() + "," + dd.doc_freq + "," + dd.term_freq + ";");
                 Posting p = dd.pList;
+                //write posting list
                 while (p != null) {
                     //    System.out.print( p.docId + "," + p.dtf + ":");
                     wr.write(p.docId + "," + p.dtf + ":");
@@ -299,14 +303,15 @@ public class Index5 {
                 wr.write("\n");
             }
             wr.write("end" + "\n");
-            wr.close();
+            wr.close(); 
             System.out.println("=============EBD STORE=============");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-//=========================================    
+//========================================= 
+    //checks if file exists true if it does else false   
     public boolean storageFileExists(String storageName){
         java.io.File f = new java.io.File(System.getProperty("user.dir") + "\\rl"+storageName);
         return f.exists() && !f.isDirectory();
@@ -315,8 +320,9 @@ public class Index5 {
 //----------------------------------------------------    
     public void createStore(String storageName) {
         try {
-            String pathToStorage = "C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName;
-            Writer wr = new FileWriter(pathToStorage);
+            //create path to storage 
+            String pathToStorage = System.getProperty("user.dir") + "\\rl"+storageName;
+            Writer wr = new FileWriter(pathToStorage); // create writer to this path
             wr.write("end" + "\n");
             wr.close();
             
@@ -328,46 +334,51 @@ public class Index5 {
      //load index from hard disk into memory
     public HashMap<String, DictEntry> load(String storageName) {
         try {
-            String pathToStorage = "C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName;         
-            sources = new HashMap<Integer, SourceRecord>();
-            index = new HashMap<String, DictEntry>();
-            BufferedReader file = new BufferedReader(new FileReader(pathToStorage));
-            String ln = "";
-            int flen = 0;
-            while ((ln = file.readLine()) != null) {
-                if (ln.equalsIgnoreCase("section2")) {
+            String pathToStorage = System.getProperty("user.dir") + "\\rl"+storageName;         
+            sources = new HashMap<Integer, SourceRecord>(); // create sources hashmap
+            index = new HashMap<String, DictEntry>(); //create index hashmap
+            BufferedReader file = new BufferedReader(new FileReader(pathToStorage)); // create buffer reader for files in storage location
+            String ln = ""; 
+            int flen = 0; // number of words in the line
+            //add all sources 
+            while ((ln = file.readLine()) != null) { // while there are lines to read
+                if (ln.equalsIgnoreCase("section2")) { // if reach part of document with section 2 then break/ completed
                     break;
                 }
-                String[] ss = ln.split(",");
-                int fid = Integer.parseInt(ss[0]);
+                String[] ss = ln.split(","); // split line at ,
+                int fid = Integer.parseInt(ss[0]); // retrieve id 
                 try {
                     System.out.println("**>>" + fid + " " + ss[1] + " " + ss[2].replace('~', ',') + " " + ss[3] + " [" + ss[4] + "]   " + ss[5].replace('~', ','));
-
+                    //create source record
                     SourceRecord sr = new SourceRecord(fid, ss[1], ss[2].replace('~', ','), Integer.parseInt(ss[3]), Double.parseDouble(ss[4]), ss[5].replace('~', ','));
                     //   System.out.println("**>>"+fid+" "+ ss[1]+" "+ ss[2]+" "+ ss[3]+" ["+ Double.parseDouble(ss[4])+ "]  \n"+ ss[5]);
-                    sources.put(fid, sr);
+                    sources.put(fid, sr); // add source 
                 } catch (Exception e) {
 
                     System.out.println(fid + "  ERROR  " + e.getMessage());
                     e.printStackTrace();
                 }
             }
-            while ((ln = file.readLine()) != null) {
+            
+            // add all index entries
+            while ((ln = file.readLine()) != null) { // while there are lines
                 //     System.out.println(ln);
-                if (ln.equalsIgnoreCase("end")) {
+                if (ln.equalsIgnoreCase("end")) { // when reach 'end' then done
                     break;
                 }
-                String[] ss1 = ln.split(";");
-                String[] ss1a = ss1[0].split(",");
-                String[] ss1b = ss1[1].split(":");
-                index.put(ss1a[0], new DictEntry(Integer.parseInt(ss1a[1]), Integer.parseInt(ss1a[2])));
-                String[] ss1bx;   //posting
-                for (int i = 0; i < ss1b.length; i++) {
+                String[] ss1 = ln.split(";"); // split at ;
+                String[] ss1a = ss1[0].split(","); // split ss1 at , for index entry
+                String[] ss1b = ss1[1].split(":");// split ss1 at : for posting lst
+                index.put(ss1a[0], new DictEntry(Integer.parseInt(ss1a[1]), Integer.parseInt(ss1a[2]))); // add index entry
+                String[] ss1bx;   //posting list
+                for (int i = 0; i < ss1b.length; i++) { // for each 
                     ss1bx = ss1b[i].split(",");
-                    if (index.get(ss1a[0]).pList == null) {
+                    if (index.get(ss1a[0]).pList == null) { // if term has no posting list
+                        //create posting list and add term and document to posting list
                         index.get(ss1a[0]).pList = new Posting(Integer.parseInt(ss1bx[0]), Integer.parseInt(ss1bx[1]));
                         index.get(ss1a[0]).last = index.get(ss1a[0]).pList;
                     } else {
+                        //add to posting list
                         index.get(ss1a[0]).last.next = new Posting(Integer.parseInt(ss1bx[0]), Integer.parseInt(ss1bx[1]));
                         index.get(ss1a[0]).last = index.get(ss1a[0]).last.next;
                     }
