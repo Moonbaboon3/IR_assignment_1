@@ -47,9 +47,18 @@ public class Index5 {
         System.out.print("[");
         while (p != null) {
             /// -4- **** complete here ****
-            // fix get rid of the last comma
+            // fix get rid of the last comma 
+
+            //if the next node is not null it adds a comma after printing the docid
+            if(p.next != null){
             System.out.print("" + p.docId + "," );
             p = p.next;
+            }
+            else{
+                //if its null it adds the docid and doesnt add the comma
+                System.out.print("" + p.docId);
+                p = p.next;
+            }
         }
         System.out.println("]");
     }
@@ -160,22 +169,31 @@ public class Index5 {
 ///****  -1-   complete after each comment ****
 //   INTERSECT ( p1 , p2 )
 //          1  answer ←      {}
+
+        // sets posting node answer and last equal to null
         Posting answer = null;
         Posting last = null;
 //      2 while p1  != NIL and p2  != NIL
+
+    // if both posting lists entered as parameters are not null it will check if theyre equa
     while(pL1 != null && pL2 != null){
     if(pL1.docId ==pL2.docId){
+        //its its equal we only want to add it once so making a new node and and add it to answer list
        Posting newNode = new Posting(pL1.docId);
+    
        if(answer == null){
         answer = newNode;
        }
+       //if answer list is null it adds it as the first node else it sets the it at the end of the list
        else{
         last.next = newNode;
        }
        last = newNode;
+       //iterates though both posting lists
        pL1 = pL1.next;
        pL2 = pL2.next;
     }
+    //if its not equal it will check which one is smaller and itreate through it
     else if(pL1.docId < pL2.docId){
         pL1 = pL1.next;
     }
@@ -208,19 +226,27 @@ public class Index5 {
         int len = words.length;
         
         //fix this if word is not in the hash table will crash...
+
+        //added an if condition to fix the exception by ensuring that the  key its trying to access even exists 
+        //before trying to compare it  to the table
+        if(index.containsKey(words[0].toLowerCase())){
         Posting posting = index.get(words[0].toLowerCase()).pList;
         int i = 1;
         while (i < len) {
+            
             posting = intersect(posting, index.get(words[i].toLowerCase()).pList);
             i++;
         }
+    
         while (posting != null) {
             //System.out.println("\t" + sources.get(num));
             result += "\t" + posting.docId + " - " + sources.get(posting.docId).title + " - " + sources.get(posting.docId).length + "\n";
             posting = posting.next;
         }
+    }
         return result;
     }
+
     
     
     //---------------------------------
@@ -247,7 +273,7 @@ public class Index5 {
 
     public void store(String storageName) {
         try {
-            String pathToStorage = "/home/ehab/tmp11/rl/"+storageName;
+            String pathToStorage = "C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName;
             Writer wr = new FileWriter(pathToStorage);
             for (Map.Entry<Integer, SourceRecord> entry : sources.entrySet()) {
                 System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue().URL + ", Value = " + entry.getValue().title + ", Value = " + entry.getValue().text);
@@ -284,7 +310,7 @@ public class Index5 {
     }
 //=========================================    
     public boolean storageFileExists(String storageName){
-        java.io.File f = new java.io.File("/home/ehab/tmp11/rl/"+storageName);
+        java.io.File f = new java.io.File("C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName);
         if (f.exists() && !f.isDirectory())
             return true;
         return false;
@@ -293,7 +319,7 @@ public class Index5 {
 //----------------------------------------------------    
     public void createStore(String storageName) {
         try {
-            String pathToStorage = "/home/ehab/tmp11/"+storageName;
+            String pathToStorage = "C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName;
             Writer wr = new FileWriter(pathToStorage);
             wr.write("end" + "\n");
             wr.close();
@@ -306,7 +332,7 @@ public class Index5 {
      //load index from hard disk into memory
     public HashMap<String, DictEntry> load(String storageName) {
         try {
-            String pathToStorage = "/home/ehab/tmp11/rl/"+storageName;         
+            String pathToStorage = "C:\\Users\\Mustafa Ammar\\Documents\\GitHub\\IR_assignment_1\\rl"+storageName;         
             sources = new HashMap<Integer, SourceRecord>();
             index = new HashMap<String, DictEntry>();
             BufferedReader file = new BufferedReader(new FileReader(pathToStorage));
